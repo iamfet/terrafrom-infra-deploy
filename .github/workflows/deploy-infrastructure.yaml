@@ -92,7 +92,11 @@ jobs:
         terraform plan -detailed-exitcode -no-color -out=tfplan > plan_output.txt 2>&1
         PLAN_EXIT_CODE=$?
         echo "exitcode=$PLAN_EXIT_CODE" >> $GITHUB_OUTPUT
-        echo "stdout=$(cat plan_output.txt)" >> $GITHUB_OUTPUT
+        # Properly escape the output for GitHub Actions
+        PLAN_OUTPUT="$(cat plan_output.txt | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/"/\\"/g')" 
+        echo "stdout<<EOF" >> $GITHUB_OUTPUT
+        echo "$PLAN_OUTPUT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
         
         if [ $PLAN_EXIT_CODE -eq 0 ]; then
           echo "✅ No changes needed"

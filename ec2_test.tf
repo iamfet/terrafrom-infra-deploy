@@ -6,6 +6,7 @@ terraform {
     }
   }
 
+
   backend "s3" {
     bucket  = "state-terraform-deploy"
     key     = "test/terraform.tfstate"

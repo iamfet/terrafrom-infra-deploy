@@ -89,9 +89,9 @@ jobs:
     - name: Terraform Plan
       id: plan
       run: |
-        set +e
-        terraform plan -detailed-exitcode -no-color -out=tfplan > plan_output.txt 2>&1
-        PLAN_EXIT_CODE=$?
+        # Run plan and tee output to both console and file
+        terraform plan -detailed-exitcode -no-color -out=tfplan | tee plan_output.txt
+        PLAN_EXIT_CODE=${PIPESTATUS[0]}
         echo "exitcode=$PLAN_EXIT_CODE" >> $GITHUB_OUTPUT
         echo "::notice::Plan exit code: $PLAN_EXIT_CODE"
         
@@ -101,10 +101,10 @@ jobs:
         else
           echo "has_changes=false" >> $GITHUB_OUTPUT
         fi
-        # Properly escape the output for GitHub Actions
-        PLAN_OUTPUT="$(cat plan_output.txt | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/"/\\"/g')" 
+        
+        # Save plan output for PR comments using GitHub's multiline output syntax
         echo "stdout<<EOF" >> $GITHUB_OUTPUT
-        echo "$PLAN_OUTPUT" >> $GITHUB_OUTPUT
+        cat plan_output.txt >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
         
         if [ $PLAN_EXIT_CODE -eq 0 ]; then
@@ -141,11 +141,11 @@ jobs:
           );
           
           const output = `#### Terraform Plan 📖
-          **Plan Exit Code:** \`${{ steps.plan.outputs.exitcode }}\`
+          **Plan Exit Code:** \`${{ steps.plan.outputs.exitcode }}\` ${${{ steps.plan.outputs.has_changes }} === 'true' ? '(Changes detected)' : '(No changes)'}
           
           <details><summary>Show Plan</summary>
           
-          \`\`\`
+          \`\`\`hcl
           ${{ steps.plan.outputs.stdout }}
           \`\`\`
           

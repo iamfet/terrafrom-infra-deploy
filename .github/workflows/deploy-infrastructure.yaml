@@ -55,6 +55,7 @@ jobs:
     needs: validate
     outputs:
       plan-exitcode: ${{ steps.plan.outputs.exitcode }}
+      has_changes: ${{ steps.plan.outputs.has_changes }}
     
     steps:
     - name: Checkout
@@ -92,6 +93,14 @@ jobs:
         terraform plan -detailed-exitcode -no-color -out=tfplan > plan_output.txt 2>&1
         PLAN_EXIT_CODE=$?
         echo "exitcode=$PLAN_EXIT_CODE" >> $GITHUB_OUTPUT
+        echo "::notice::Plan exit code: $PLAN_EXIT_CODE"
+        
+        # Set explicit has_changes output
+        if [ $PLAN_EXIT_CODE -eq 2 ]; then
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+        fi
         # Properly escape the output for GitHub Actions
         PLAN_OUTPUT="$(cat plan_output.txt | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/"/\\"/g')" 
         echo "stdout<<EOF" >> $GITHUB_OUTPUT

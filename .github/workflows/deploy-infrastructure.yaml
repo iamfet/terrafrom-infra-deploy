@@ -89,9 +89,10 @@ jobs:
       id: plan
       run: |
         set +e
-        terraform plan -detailed-exitcode -no-color -out=tfplan
+        terraform plan -detailed-exitcode -no-color -out=tfplan > plan_output.txt 2>&1
         PLAN_EXIT_CODE=$?
         echo "exitcode=$PLAN_EXIT_CODE" >> $GITHUB_OUTPUT
+        echo "stdout=$(cat plan_output.txt)" >> $GITHUB_OUTPUT
         
         if [ $PLAN_EXIT_CODE -eq 0 ]; then
           echo "✅ No changes needed"
